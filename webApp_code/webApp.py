@@ -21,7 +21,7 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 st.title("Amazon Stock Analysis and Prediction")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs(['Overview', 'Stock Analysis', 'Interactive Analysis', 'Future Predictions', 'Conclusion'])
+tab1, tab2, tab3, tab4 = st.tabs(['Stock Study and Analysis', 'Interactive Analysis', 'Future Predictions', 'Conclusion'])
 
 stock_info = pd.read_csv('https://raw.githubusercontent.com/pranitahuja00/Amazon-Stock-Prediction/main/data/AMZN.csv')
 stock_daily = pd.read_csv("https://raw.githubusercontent.com/pranitahuja00/Amazon-Stock-Prediction/main/data/AMZN_daily.csv")
@@ -64,9 +64,6 @@ stock_monthly = stock_monthly.drop('previous_day_price', axis=1)
 
 # TAB 1
 with tab1:
-    st.write("")
-
-with tab2:
     st.subheader("Stock Analysis")
 
     st.write("Monthly stock closing price over the years (Scale: Log):")
@@ -126,9 +123,39 @@ with tab2:
     ).interactive()
     #st.altair_chart(movement_chart, use_container_width=True)
 
-with tab3:
+with tab2:
     st.subheader("Interactive Analysis")
+    st.write("Stock Price and trade volume over custom time period:")
+    start_date = st.slider('Select the starting date', value = datetime(1997,5,20), min_value = datetime(1997,5,20), max_value = datetime(2023,11,3))
+    end_date = st.slider('Select the ending date', value = datetime(1997,6,20), min_value = datetime(1997,6,20), max_value = datetime(2023,12,3))
 
+    custom_price_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
+        x=alt.X('Date').title('Date (Weekly)'),
+        y=alt.Y('Close', scale=alt.Scale(domain=[stock_weekly['Close'].min(), stock_weekly['Close'].max()])).title('Closing Price').scale(type='log')
+    ).interactive()
+    st.altair_chart(custom_price_chart, use_container_width=True)
+
+    stock_custom_box = stock_daily.loc[(stock_daily['Date'] >= start_date) & (stock_daily['Date'] <= end_date)]
+
+    fig_custom = go.Figure()
+    fig_custom.add_trace(go.Box(x=stock_custom_box['Close'], name='Close Price',
+                marker_color = 'indianred'))
+    fig_custom.add_trace(go.Box(x=stock_custom_box['Open'], name = 'Open Price',
+                marker_color = 'lightseagreen'))
+    fig_custom.add_trace(go.Box(x=stock_custom_box['High'], name='High',
+                marker_color = 'Blue'))
+    fig_custom.add_trace(go.Box(x=stock_custom_box['Low'], name = 'Low',
+                marker_color = 'Yellow'))
+    st.plotly_chart(fig_custom, use_container_width=True)
+
+    custom_volume_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
+        x=alt.X('Date').title('Date (Weekly)'),
+        y=alt.Y('Volume', scale=alt.Scale(domain=[stock_weekly['Volume'].min(), stock_weekly['Volume'].max()])).scale(type='log')
+    ).interactive()
+    st.altair_chart(custom_volume_chart, use_container_width=True)
+
+    
+    
 
 
 
@@ -212,7 +239,7 @@ test_pred_data = pd.DataFrame(test_pred_data, columns=['Actual Close', 'Predicte
 
 
 
-with tab4:
+with tab3:
     st.subheader("Prediction using LSTM (Long Short-Term Memory) model")
     st.write("I have used an LSTM model to predict the stock closing prices which recursively uses closing price data of last 7 days to make predictions. The line plot below with the actual and predicted closing prices shows the accuracy of the model for now.")
     fig = plt.figure()
