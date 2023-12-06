@@ -250,8 +250,7 @@ with tab4:
     forecast_df = pd.DataFrame({'Date': forecast_index, 'Forecast': forecast_values})
     with col2:
         st.write("Forecast")
-        st.write(forecast_df['Forecast'])   
-
+        st.write(forecast_df['Forecast'])
 
 
 
