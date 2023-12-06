@@ -7,6 +7,5 @@ matplotlib
 scikit-learn
 seaborn
 torch
-pytorch
 statsmodels
 
