@@ -1,0 +1,13 @@
+streamlit
+pandas
+numpy
+altair
+plotly
+matplotlib
+scikit-learn
+seaborn
+pickle
+torch
+pytorch
+statsmodels
+
