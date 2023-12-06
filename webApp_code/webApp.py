@@ -181,7 +181,7 @@ class LSTM(nn.Module):
         out, _ = self.lstm(x, (h0, c0))
         out = self.fc(out[:, -1, :])
         return out
-model = pickle.load(open("https://github.com/pranitahuja00/Amazon-Stock-Prediction/raw/main/webApp_code/model.pkl", 'rb'))
+model = pickle.load(open("webApp_code/model.pkl", 'rb'))
 
 
 def prepare_dataframe_for_lstm(df, n_steps):
