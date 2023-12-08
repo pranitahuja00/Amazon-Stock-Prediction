@@ -250,6 +250,16 @@ with tab3:
     plt.legend()
     st.pyplot(fig)
 
+    line_fig = go.Figure()
+    line_fig.add_trace(go.Scatter(y=test_pred_data['Actual Close'], name='Actual Close',
+                                  mode='lines',
+                marker_color = 'indianred'))
+    line_fig.add_trace(go.Scatter(y=test_pred_data['Predicted Close'], name = 'Predicted Close',
+                                    mode='lines',
+                marker_color = 'lightseagreen'))
+   
+    st.plotly_chart(line_fig, use_container_width=True)
+
     st.subheader("Stock predictions using rolling average and SARIMA")
     roling_window = st.slider('Select the rolling average window', value=7, min_value=3, max_value=14)
     forecast_steps = st.slider('Select the number of days from Dec 4 2023 for which you want to make the predictions', value=1, min_value=1, max_value=14)
