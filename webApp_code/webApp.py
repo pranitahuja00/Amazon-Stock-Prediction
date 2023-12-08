@@ -103,13 +103,13 @@ with tab1:
     stock_daily_22_23 = stock_daily.loc[(stock_daily['Date'] >= datetime(2022,12,1)) & (stock_daily['Date'] <= datetime(2023,12,5))]
 
     fig = go.Figure()
-    fig.add_trace(go.Box(x=stock_daily_22_23['Close'], name='Close Price',
+    fig.add_trace(go.Box(y=stock_daily_22_23['Close'], name='Close Price',
                 marker_color = 'indianred'))
-    fig.add_trace(go.Box(x=stock_daily_22_23['Open'], name = 'Open Price',
+    fig.add_trace(go.Box(y=stock_daily_22_23['Open'], name = 'Open Price',
                 marker_color = 'lightseagreen'))
-    fig.add_trace(go.Box(x=stock_daily_22_23['High'], name='High',
-                marker_color = 'Blue'))
-    fig.add_trace(go.Box(x=stock_daily_22_23['Low'], name = 'Low',
+    fig.add_trace(go.Box(y=stock_daily_22_23['High'], name='High',
+                marker_color = 'lightblue'))
+    fig.add_trace(go.Box(y=stock_daily_22_23['Low'], name = 'Low',
                 marker_color = 'Yellow'))
 
     st.altair_chart(alt.hconcat(recent_weekly_price,recent_daily_price), use_container_width=True)
@@ -132,27 +132,35 @@ with tab2:
     custom_price_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
         x=alt.X('Date').title('Date (Weekly)'),
         y=alt.Y('Close', scale=alt.Scale(domain=[stock_weekly['Close'].min(), stock_weekly['Close'].max()])).title('Closing Price').scale(type='log')
-    ).interactive()
-    st.altair_chart(custom_price_chart, use_container_width=True)
+    ).interactive().properties(
+        width=200,
+        height=150
+    )
+    
+    custom_volume_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
+        x=alt.X('Date').title('Date (Weekly)'),
+        y=alt.Y('Volume', scale=alt.Scale(domain=[stock_weekly['Volume'].min(), stock_weekly['Volume'].max()])).scale(type='log')
+    ).interactive().properties(
+        width=300,
+        height=150
+    )
+
+    st.altair_chart(alt.hconcat(custom_price_chart, custom_volume_chart), use_container_width= True)
 
     stock_custom_box = stock_daily.loc[(stock_daily['Date'] >= start_date) & (stock_daily['Date'] <= end_date)]
 
     fig_custom = go.Figure()
-    fig_custom.add_trace(go.Box(x=stock_custom_box['Close'], name='Close Price',
+    fig_custom.add_trace(go.Box(y=stock_custom_box['Close'], name='Close Price',
                 marker_color = 'indianred'))
-    fig_custom.add_trace(go.Box(x=stock_custom_box['Open'], name = 'Open Price',
+    fig_custom.add_trace(go.Box(y=stock_custom_box['Open'], name = 'Open Price',
                 marker_color = 'lightseagreen'))
-    fig_custom.add_trace(go.Box(x=stock_custom_box['High'], name='High',
-                marker_color = 'Blue'))
-    fig_custom.add_trace(go.Box(x=stock_custom_box['Low'], name = 'Low',
+    fig_custom.add_trace(go.Box(y=stock_custom_box['High'], name='High',
+                marker_color = 'lightblue'))
+    fig_custom.add_trace(go.Box(y=stock_custom_box['Low'], name = 'Low',
                 marker_color = 'Yellow'))
     st.plotly_chart(fig_custom, use_container_width=True)
 
-    custom_volume_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
-        x=alt.X('Date').title('Date (Weekly)'),
-        y=alt.Y('Volume', scale=alt.Scale(domain=[stock_weekly['Volume'].min(), stock_weekly['Volume'].max()])).scale(type='log')
-    ).interactive()
-    st.altair_chart(custom_volume_chart, use_container_width=True)
+
 
     
     
@@ -242,13 +250,6 @@ test_pred_data = pd.DataFrame(test_pred_data, columns=['Actual Close', 'Predicte
 with tab3:
     st.subheader("Prediction using LSTM (Long Short-Term Memory) model")
     st.write("I have used an LSTM model to predict the stock closing prices which recursively uses closing price data of last 7 days to make predictions. The line plot below with the actual and predicted closing prices shows the accuracy of the model for now.")
-    fig = plt.figure()
-    plt.plot(new_y_test, label='Actual Close')
-    plt.plot(test_predictions, label='Predicted Close')
-    plt.xlabel('Day')
-    plt.ylabel('Close')
-    plt.legend()
-    st.pyplot(fig)
 
     line_fig = go.Figure()
     line_fig.add_trace(go.Scatter(y=test_pred_data['Actual Close'], name='Actual Close',
@@ -263,6 +264,7 @@ with tab3:
     st.subheader("Stock predictions using rolling average and SARIMA")
     roling_window = st.slider('Select the rolling average window', value=7, min_value=3, max_value=14)
     forecast_steps = st.slider('Select the number of days from Dec 4 2023 for which you want to make the predictions', value=1, min_value=1, max_value=14)
+    sarima_predict = st.button("Click to predict (! Will take some time !)")
     col1, col2 = st.columns(2)
     data = stock_daily['Close']
     
@@ -272,22 +274,28 @@ with tab3:
         st.write(rolling_average)
     rolling_average = rolling_average.dropna()
 
-    # Fit SARIMA model on the rolling average
-    order = (1, 0, 1)  # Example order, you may need to choose based on model diagnostics
-    seasonal_order = (1, 1, 1, 12)  # Example seasonal order
-    sarima_model = SARIMAX(rolling_average, order=order, seasonal_order=seasonal_order)
-    sarima_fit = sarima_model.fit(disp=False)
 
-    # Forecast future values
+
+    if sarima_predict:
+        # Fit SARIMA model on the rolling average
+        order = (1, 0, 1)  # Example order, you may need to choose based on model diagnostics
+        seasonal_order = (1, 1, 1, 12)  # Example seasonal order
+        sarima_model = SARIMAX(rolling_average, order=order, seasonal_order=seasonal_order)
+        sarima_fit = sarima_model.fit(disp=False)
+
+        # Forecast future values
     
-    forecast = sarima_fit.get_forecast(steps=forecast_steps) 
-    forecast_index = pd.date_range(start=rolling_average.index[-1], periods=forecast_steps + 1, freq='B')[1:]  # Adjust frequency as needed
-    forecast_values = forecast.predicted_mean.values
+        forecast = sarima_fit.get_forecast(steps=forecast_steps) 
+        forecast_index = pd.date_range(start=rolling_average.index[-1], periods=forecast_steps + 1, freq='B')[1:]  # Adjust frequency as needed
+        forecast_values = forecast.predicted_mean.values
 
-    forecast_df = pd.DataFrame({'Date': forecast_index, 'Forecast': forecast_values})
-    with col2:
-        st.write("Forecast")
-        st.write(forecast_df['Forecast'])
+        forecast_df = pd.DataFrame({'Date': forecast_index, 'Forecast': forecast_values})
+        with col2:
+            st.write("Forecast")
+            st.write(forecast_df['Forecast'])
+
+
+    
 
 
 
