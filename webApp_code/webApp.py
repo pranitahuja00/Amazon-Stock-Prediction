@@ -17,6 +17,7 @@ from copy import deepcopy as dc
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing
 from sklearn.metrics import mean_squared_error
 from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.tsa.seasonal import seasonal_decompose
 
 
 st.title("Amazon Stock Analysis and Prediction")
@@ -72,8 +73,40 @@ with tab1:
         y=alt.Y('Close').scale(type='log').title('Closing Price')
     ).interactive()
     st.altair_chart(close_price_chart, use_container_width=True)
-    st.write("The above chart shows the overall stock trends of Amazon on a monthly basis (Each data point refers to the closing price of the last day of each month) from May 1997 (When the company went public) to Dec 2023. Amazon stock first boomed during the late 90s which is also known as the dot com bubble after which we can notice a general upward trend in the stock price with some significant upward and downward movements in between. The first major downward trend can be seen in the year 2000 (The early 2000s recession) followed by a significant fall in 2008 (The Great Recession).")
+    st.write("The above chart shows the overall closing stock price trends of Amazon on a monthly basis (Each data point refers to the closing price of the last day of each month) from May 1997 (When the company went public) to Dec 2023. Amazon stock first boomed during the late 90s which is also known as the dot com bubble after which we can notice a general upward trend in the stock price with some significant upward and downward movements in between. The first major downward trend can be seen in the year 2000 (The early 2000s recession) followed by a significant fall in 2008 (The Great Recession). The positive effect of the covid pandemic IT boom can also be seen in the chart as the stock price goes up in the second half of 2020 till 2021 which was followed by the post pandemic recession leading to a downward trend from the second quarter of 2022.")
 
+    #Seasonality and Quarterly averages
+    tab_seasonality, tab_quarterly = st.tabs(['Stock Closing Price Seasonality', 'Quarterly Averages'])
+    with tab_seasonality:
+        st.write("Checking seasonality trends from 2014 - 2023 using decomposition:")
+        temp_monthly = stock_monthly.tail(120).set_index('Date')
+        decomposed_series = seasonal_decompose(temp_monthly['Close'])
+        fig_original_sea = go.Figure()
+        fig_original_sea.add_trace(go.Scatter(x=temp_monthly.index, y=temp_monthly['Close'], mode='lines', name='Original'))
+        fig_original_sea.add_trace(go.Scatter(x=temp_monthly.index, y=decomposed_series.seasonal, mode='lines', name='Seasonality'))
+        fig_original_sea.update_layout(title='Amazon Stock Seasonality',
+                  xaxis_title='Date',
+                  yaxis_title='Closing Price')
+        st.plotly_chart(fig_original_sea)
+        st.write("Taking a closer look at the stock seasonality")
+        fig_sea = go.Figure()
+        fig_sea.add_trace(go.Scatter(x=temp_monthly.index, y=decomposed_series.seasonal, mode='lines', name='Seasonality'))
+        fig_sea.update_layout(
+                  xaxis_title='Date',
+                  yaxis_title='Closing Price')
+        st.plotly_chart(fig_sea)
+        st.write("The chart shows the yearly pattern that the Amazon stock prices tend to follow. If the market conditions remain stable and are not adversely affected by some external events or recessions then one can expect to buy stocks at a very low price in around January or February and sell at yearly high prices in the middle of the year which would be around June or July leading to a good profit. Seasonality can often help in predicting such yearly trends which can help investors with their decisions.")
+
+    with tab_quarterly:
+        st.write("Stock price quarterly averages from 2014 - 2023:")
+        temp_monthly['Quarter'] = temp_monthly.index.quarter
+        temp_monthly['Year'] = temp_monthly.index.year
+        quarter = temp_monthly.groupby(["Year", "Quarter"])["Close"].mean().unstack()
+        quarterly_heatmap = px.imshow(quarter, text_auto=True, aspect="auto")
+        st.plotly_chart(quarterly_heatmap)
+        st.write("Recent quarterly averages show that the first and last quarters are most suitable to pick up some stocks at lower prices and the stock price rises up during the other two quarters.")
+
+    # Stock volume
     st.write("Monthly stock trade volume over the years")
     volume_chart = alt.Chart(stock_monthly).mark_line().encode(
         x='Date',
@@ -82,14 +115,8 @@ with tab1:
     st.altair_chart(volume_chart, use_container_width=True)
     st.write("Stock trade volume tells the amount of stocks traded between two parties in a specific amount of time. It is oftenly used as a measure of stock popularity in the market. In case of Amazon, stock trade volume is showing a general downward trend with significant ups and downs in between. Dot Com Bubble (Late 90s) era proved to be the time when Amazon stocks boomed in popularity along with price with significant ups and downs in between followed by an all time low in the recent months.")
 
+    # Dec 2022 - Dec 2023 Stock analysis
     st.write("Closing stock price data from Dec 2022 - Dec 2023:")
-    recent_daily_price = alt.Chart(stock_daily.loc[(stock_daily['Date'] >= datetime(2022,12,1)) & (stock_daily['Date'] <= datetime(2023,12,5))]).mark_line().encode(
-        x=alt.X('Date').title('Date (Daily)'),
-        y=alt.Y('Close', scale=alt.Scale(domain=[stock_daily['Close'].min(), stock_daily['Close'].max()])).title('Closing Price')
-    ).interactive().properties(
-    width=300,
-    height=200
-    )
     recent_weekly_price = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= datetime(2022,12,1)) & (stock_weekly['Date'] <= datetime(2023,12,5))]).mark_line().encode(
         x=alt.X('Date').title('Date (Weekly)'),
         y=alt.Y('Close', scale=alt.Scale(domain=[stock_weekly['Close'].min(), stock_weekly['Close'].max()])).title('Closing Price')
@@ -97,31 +124,18 @@ with tab1:
     width=300,
     height=200
     )
-
-    recent_price_box = px.box(stock_daily.loc[(stock_daily['Date'] >= datetime(2022,12,1)) & (stock_daily['Date'] <= datetime(2023,12,5))], x=['Close', 'Open', 'High', 'Low'])
- 
     stock_daily_22_23 = stock_daily.loc[(stock_daily['Date'] >= datetime(2022,12,1)) & (stock_daily['Date'] <= datetime(2023,12,5))]
-
     fig = go.Figure()
-    fig.add_trace(go.Box(y=stock_daily_22_23['Close'], name='Close Price',
+    fig.add_trace(go.Box(x=stock_daily_22_23['Close'], name='Close Price',
                 marker_color = 'indianred'))
-    fig.add_trace(go.Box(y=stock_daily_22_23['Open'], name = 'Open Price',
+    fig.add_trace(go.Box(x=stock_daily_22_23['Open'], name = 'Open Price',
                 marker_color = 'lightseagreen'))
-    fig.add_trace(go.Box(y=stock_daily_22_23['High'], name='High',
+    fig.add_trace(go.Box(x=stock_daily_22_23['High'], name='High',
                 marker_color = 'lightblue'))
-    fig.add_trace(go.Box(y=stock_daily_22_23['Low'], name = 'Low',
+    fig.add_trace(go.Box(x=stock_daily_22_23['Low'], name = 'Low',
                 marker_color = 'Yellow'))
-
-    st.altair_chart(alt.hconcat(recent_weekly_price,recent_daily_price), use_container_width=True)
+    st.altair_chart(recent_weekly_price, use_container_width=True)
     st.plotly_chart(fig, use_container_width=True)
-
-    
-    #st.write("Interday stock movement in the past 150 days")
-    movement_chart = alt.Chart(stock_daily.tail(150)).mark_line().encode(
-        x='Date',
-        y='Movement'
-    ).interactive()
-    #st.altair_chart(movement_chart, use_container_width=True)
 
 with tab2:
     st.subheader("Interactive Analysis")
