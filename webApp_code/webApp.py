@@ -4,6 +4,7 @@ import numpy as np
 import altair as alt
 import plotly.express as px
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import matplotlib.pyplot as plt
 import seaborn as sns
 from altair import datum
@@ -116,71 +117,121 @@ with tab1:
     st.write("Stock trade volume tells the amount of stocks traded between two parties in a specific amount of time. It is oftenly used as a measure of stock popularity in the market. In case of Amazon, stock trade volume is showing a general downward trend with significant ups and downs in between. Dot Com Bubble (Late 90s) era proved to be the time when Amazon stocks boomed in popularity along with price with significant ups and downs in between followed by an all time low in the recent months.")
 
     # Dec 2022 - Dec 2023 Stock analysis
-    st.write("Closing stock price data from Dec 2022 - Dec 2023:")
-    recent_weekly_price = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= datetime(2022,12,1)) & (stock_weekly['Date'] <= datetime(2023,12,5))]).mark_line().encode(
+    st.write("Comparing the last two years:")
+    recent_weekly_price23 = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= datetime(2022,12,1)) & (stock_weekly['Date'] <= datetime(2023,12,5))], title="Dec 2022 - Dec 2023").mark_line().encode(
         x=alt.X('Date').title('Date (Weekly)'),
         y=alt.Y('Close', scale=alt.Scale(domain=[stock_weekly['Close'].min(), stock_weekly['Close'].max()])).title('Closing Price')
     ).interactive().properties(
     width=300,
     height=200
     )
+    recent_weekly_price22 = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= datetime(2021,12,1)) & (stock_weekly['Date'] <= datetime(2022,12,5))], title="Dec 2021 - Dec 2022").mark_line().encode(
+        x=alt.X('Date').title('Date (Weekly)'),
+        y=alt.Y('Close', scale=alt.Scale(domain=[stock_weekly['Close'].min(), stock_weekly['Close'].max()])).title('Closing Price')
+    ).interactive().properties(
+    width=300,
+    height=200
+    )
+    stock_daily_21_22 = stock_daily.loc[(stock_daily['Date'] >= datetime(2021,12,1)) & (stock_daily['Date'] <= datetime(2022,12,5))]
+    fig2 = go.Figure()
+    fig2.add_trace(go.Box(x=stock_daily_21_22['Close'], name='Close Price',
+                marker_color = 'indianred', boxmean=True))
+    fig2.add_trace(go.Box(x=stock_daily_21_22['Open'], name = 'Open Price',
+                marker_color = 'lightseagreen', boxmean=True))
+    fig2.add_trace(go.Box(x=stock_daily_21_22['High'], name='High',
+                marker_color = 'lightblue', boxmean=True))
+    fig2.add_trace(go.Box(x=stock_daily_21_22['Low'], name = 'Low',
+                marker_color = 'Yellow', boxmean=True))
+    fig2.update_layout(title="Dec 2021 - Dec 2022")
     stock_daily_22_23 = stock_daily.loc[(stock_daily['Date'] >= datetime(2022,12,1)) & (stock_daily['Date'] <= datetime(2023,12,5))]
     fig = go.Figure()
     fig.add_trace(go.Box(x=stock_daily_22_23['Close'], name='Close Price',
-                marker_color = 'indianred'))
+                marker_color = 'indianred', boxmean=True))
     fig.add_trace(go.Box(x=stock_daily_22_23['Open'], name = 'Open Price',
-                marker_color = 'lightseagreen'))
+                marker_color = 'lightseagreen', boxmean=True))
     fig.add_trace(go.Box(x=stock_daily_22_23['High'], name='High',
-                marker_color = 'lightblue'))
+                marker_color = 'lightblue', boxmean=True))
     fig.add_trace(go.Box(x=stock_daily_22_23['Low'], name = 'Low',
-                marker_color = 'Yellow'))
-    st.altair_chart(recent_weekly_price, use_container_width=True)
+                marker_color = 'Yellow', boxmean=True))
+    fig.update_layout(title="Dec 2022 - Dec 2023")
+    
+    st.altair_chart(alt.hconcat(recent_weekly_price22, recent_weekly_price23), use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True)
     st.plotly_chart(fig, use_container_width=True)
+
+    st.write("The above charts represent the stock price trends from in the last two years. These plots indicate that Amazon stocks have went down significantly during the 2021 - 2022 year from around 178 USD to an annual low of 86.14 USD. The next year (2022 - 2023) witnessed a significant rising trend with some small variations in between. The stock price in the last year ranged from an all time low of 81.43 USD all the way to an all time high of 149.26 USD with median opening and closing prices of 123.01 USD and 121.166 USD and both their averages sitting at around 116.5 USD")
 
 with tab2:
     st.subheader("Interactive Analysis")
     st.write("Stock Price and trade volume over custom time period:")
+    st.write("Select a minimum time period of 2 years to view seasonality and quarterly averages as well")
     start_date = st.slider('Select the starting date', value = datetime(1997,5,20), min_value = datetime(1997,5,20), max_value = datetime(2023,11,3))
     end_date = st.slider('Select the ending date', value = datetime(1997,6,20), min_value = datetime(1997,6,20), max_value = datetime(2023,12,3))
 
-    custom_price_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
-        x=alt.X('Date').title('Date (Weekly)'),
-        y=alt.Y('Close', scale=alt.Scale(domain=[stock_weekly['Close'].min(), stock_weekly['Close'].max()])).title('Closing Price').scale(type='log')
-    ).interactive().properties(
-        width=200,
-        height=150
-    )
+    custom_button = st.button("Change Visualisations")
+    if custom_button:
+        custom_price_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
+            x=alt.X('Date').title('Date (Weekly)'),
+            y=alt.Y('Close', scale=alt.Scale(domain=[stock_weekly['Close'].min(), stock_weekly['Close'].max()])).title('Closing Price').scale(type='log')
+        ).interactive().properties(
+            width=200,
+            height=150
+        )
     
-    custom_volume_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
-        x=alt.X('Date').title('Date (Weekly)'),
-        y=alt.Y('Volume', scale=alt.Scale(domain=[stock_weekly['Volume'].min(), stock_weekly['Volume'].max()])).scale(type='log')
-    ).interactive().properties(
-        width=300,
-        height=150
-    )
+        custom_volume_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
+            x=alt.X('Date').title('Date (Weekly)'),
+            y=alt.Y('Volume', scale=alt.Scale(domain=[stock_weekly['Volume'].min(), stock_weekly['Volume'].max()])).scale(type='log')
+        ).interactive().properties(
+            width=300,
+            height=150
+        )
 
-    st.altair_chart(alt.hconcat(custom_price_chart, custom_volume_chart), use_container_width= True)
+        st.altair_chart(alt.hconcat(custom_price_chart, custom_volume_chart), use_container_width= True)
 
-    stock_custom_box = stock_daily.loc[(stock_daily['Date'] >= start_date) & (stock_daily['Date'] <= end_date)]
+        stock_custom_box = stock_daily.loc[(stock_daily['Date'] >= start_date) & (stock_daily['Date'] <= end_date)]
 
-    fig_custom = go.Figure()
-    fig_custom.add_trace(go.Box(y=stock_custom_box['Close'], name='Close Price',
-                marker_color = 'indianred'))
-    fig_custom.add_trace(go.Box(y=stock_custom_box['Open'], name = 'Open Price',
-                marker_color = 'lightseagreen'))
-    fig_custom.add_trace(go.Box(y=stock_custom_box['High'], name='High',
-                marker_color = 'lightblue'))
-    fig_custom.add_trace(go.Box(y=stock_custom_box['Low'], name = 'Low',
-                marker_color = 'Yellow'))
-    st.plotly_chart(fig_custom, use_container_width=True)
+        fig_custom = go.Figure()
+        fig_custom.add_trace(go.Box(x=stock_custom_box['Close'], name='Close Price',
+                    marker_color = 'indianred', boxmean=True))
+        fig_custom.add_trace(go.Box(x=stock_custom_box['Open'], name = 'Open Price',
+                    marker_color = 'lightseagreen', boxmean=True))
+        fig_custom.add_trace(go.Box(x=stock_custom_box['High'], name='High',
+                    marker_color = 'lightblue', boxmean=True))
+        fig_custom.add_trace(go.Box(x=stock_custom_box['Low'], name = 'Low',
+                    marker_color = 'Yellow', boxmean=True))
+        st.plotly_chart(fig_custom, use_container_width=True)
 
+        #Seasonality and Quarterly averages
+        temp_monthly_custom = stock_monthly.loc[(stock_monthly['Date'] >= start_date) & (stock_monthly['Date'] <= end_date)].set_index('Date')
+        if(temp_monthly_custom.shape[0]>=24):    
+            tab_seasonality_custom, tab_quarterly_custom = st.tabs(['Stock Closing Price Seasonality', 'Quarterly Averages'])
+            with tab_seasonality_custom:
+                st.write("Checking seasonality trends from ",start_date," - ",end_date,":")        
+                decomposed_series_custom = seasonal_decompose(temp_monthly_custom['Close'])
+                fig_original_sea_custom = go.Figure()
+                fig_original_sea_custom.add_trace(go.Scatter(x=temp_monthly_custom.index, y=temp_monthly_custom['Close'], mode='lines', name='Original'))
+                fig_original_sea_custom.add_trace(go.Scatter(x=temp_monthly_custom.index, y=decomposed_series_custom.seasonal, mode='lines', name='Seasonality'))
+                fig_original_sea_custom.update_layout(title='Amazon Stock Seasonality',
+                          xaxis_title='Date',
+                          yaxis_title='Closing Price')
+                st.plotly_chart(fig_original_sea_custom)
+                st.write("Taking a closer look at the stock seasonality")
+                fig_sea_custom = go.Figure()
+                fig_sea_custom.add_trace(go.Scatter(x=temp_monthly_custom.index, y=decomposed_series_custom.seasonal, mode='lines', name='Seasonality'))
+                fig_sea_custom.update_layout(
+                          xaxis_title='Date',
+                          yaxis_title='Closing Price')
+                st.plotly_chart(fig_sea_custom)
 
+            with tab_quarterly_custom:
+                st.write("Stock price quarterly averages from ",start_date," - ",end_date,":")
+                temp_monthly_custom['Quarter'] = temp_monthly_custom.index.quarter
+                temp_monthly_custom['Year'] = temp_monthly_custom.index.year
+                quarter_custom = temp_monthly_custom.groupby(["Year", "Quarter"])["Close"].mean().unstack()
+                quarterly_heatmap_custom = px.imshow(quarter_custom, text_auto=True, aspect="auto")
+                st.plotly_chart(quarterly_heatmap_custom)
 
     
-    
-
-
-
 
 # Loading the LSTM model and making predictions
 data = stock_daily[['Date','Close']]
