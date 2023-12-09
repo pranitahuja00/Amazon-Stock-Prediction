@@ -87,14 +87,14 @@ with tab1:
         fig_original_sea.add_trace(go.Scatter(x=temp_monthly.index, y=decomposed_series.seasonal, mode='lines', name='Seasonality'))
         fig_original_sea.update_layout(title='Amazon Stock Seasonality',
                   xaxis_title='Date',
-                  yaxis_title='Closing Price')
+                  yaxis_title='Seasonality')
         st.plotly_chart(fig_original_sea)
         st.write("Taking a closer look at the stock seasonality")
         fig_sea = go.Figure()
         fig_sea.add_trace(go.Scatter(x=temp_monthly.index, y=decomposed_series.seasonal, mode='lines', name='Seasonality'))
         fig_sea.update_layout(
                   xaxis_title='Date',
-                  yaxis_title='Closing Price')
+                  yaxis_title='Seasonality')
         st.plotly_chart(fig_sea)
         st.write("The chart shows the yearly pattern that the Amazon stock prices tend to follow. If the market conditions remain stable and are not adversely affected by some external events or recessions then one can expect to buy stocks at a very low price in around January or February and sell at yearly high prices in the middle of the year which would be around June or July leading to a good profit. Seasonality can often help in predicting such yearly trends which can help investors with their decisions.")
 
@@ -168,7 +168,7 @@ with tab2:
     start_date = st.slider('Select the starting date', value = datetime(1997,5,20), min_value = datetime(1997,5,20), max_value = datetime(2023,11,3))
     end_date = st.slider('Select the ending date', value = datetime(1997,6,20), min_value = datetime(1997,6,20), max_value = datetime(2023,12,3))
 
-    custom_button = st.button("Change Visualisations")
+    custom_button = st.button("Click to generate")
     if custom_button:
         custom_price_chart = alt.Chart(stock_weekly.loc[(stock_weekly['Date'] >= start_date) & (stock_weekly['Date'] <= end_date)]).mark_line().encode(
             x=alt.X('Date').title('Date (Weekly)'),
@@ -213,14 +213,14 @@ with tab2:
                 fig_original_sea_custom.add_trace(go.Scatter(x=temp_monthly_custom.index, y=decomposed_series_custom.seasonal, mode='lines', name='Seasonality'))
                 fig_original_sea_custom.update_layout(title='Amazon Stock Seasonality',
                           xaxis_title='Date',
-                          yaxis_title='Closing Price')
+                          yaxis_title='Seasonality')
                 st.plotly_chart(fig_original_sea_custom)
                 st.write("Taking a closer look at the stock seasonality")
                 fig_sea_custom = go.Figure()
                 fig_sea_custom.add_trace(go.Scatter(x=temp_monthly_custom.index, y=decomposed_series_custom.seasonal, mode='lines', name='Seasonality'))
                 fig_sea_custom.update_layout(
                           xaxis_title='Date',
-                          yaxis_title='Closing Price')
+                          yaxis_title='Seasonality')
                 st.plotly_chart(fig_sea_custom)
 
             with tab_quarterly_custom:
@@ -233,99 +233,9 @@ with tab2:
 
     
 
-# Loading the LSTM model and making predictions
-data = stock_daily[['Date','Close']]
-class LSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_stacked_layers):
-        super().__init__()
-        self.hidden_size = hidden_size
-        self.num_stacked_layers = num_stacked_layers
-
-        self.lstm = nn.LSTM(input_size, hidden_size, num_stacked_layers,
-                            batch_first=True)
-
-        self.fc = nn.Linear(hidden_size, 1)
-
-    def forward(self, x):
-        batch_size = x.size(0)
-        h0 = torch.zeros(self.num_stacked_layers, batch_size, self.hidden_size)
-        c0 = torch.zeros(self.num_stacked_layers, batch_size, self.hidden_size)
-
-        out, _ = self.lstm(x, (h0, c0))
-        out = self.fc(out[:, -1, :])
-        return out
-model = pickle.load(open("webApp_code/model.pkl", 'rb'))
-
-
-def prepare_dataframe_for_lstm(df, n_steps):
-    df = dc(df)
-
-    df.set_index('Date', inplace=True)
-
-    for i in range(1, n_steps+1):
-        df[f'Close(t-{i})'] = df['Close'].shift(i)
-
-    df.dropna(inplace=True)
-
-    return df
-
-lookback = 7
-shifted_df = prepare_dataframe_for_lstm(data, lookback)
-shifted_df_as_np = shifted_df.to_numpy()
-scaler = MinMaxScaler(feature_range=(-1, 1))
-shifted_df_as_np = scaler.fit_transform(shifted_df_as_np)
-X = shifted_df_as_np[:, 1:]
-y = shifted_df_as_np[:, 0]
-X = dc(np.flip(X, axis=1))
-split_index = int(len(X) * 0.95)
-X_train = X[:split_index]
-X_test = X[split_index:]
-y_train = y[:split_index]
-y_test = y[split_index:]
-X_train = X_train.reshape((-1, lookback, 1))
-X_test = X_test.reshape((-1, lookback, 1))
-y_train = y_train.reshape((-1, 1))
-y_test = y_test.reshape((-1, 1))
-X_train = torch.tensor(X_train).float()
-y_train = torch.tensor(y_train).float()
-X_test = torch.tensor(X_test).float()
-y_test = torch.tensor(y_test).float()
-
-test_predictions = model(X_test).detach().cpu().numpy().flatten()
-
-dummies = np.zeros((X_test.shape[0], lookback+1))
-dummies[:, 0] = test_predictions
-dummies = scaler.inverse_transform(dummies)
-
-test_predictions = dc(dummies[:, 0])
-dummies = np.zeros((X_test.shape[0], lookback+1))
-dummies[:, 0] = y_test.flatten()
-dummies = scaler.inverse_transform(dummies)
-
-new_y_test = dc(dummies[:, 0])
-
-test_pred_data = np.array([new_y_test, test_predictions])
-test_pred_data = np.transpose(test_pred_data)
-test_pred_data = pd.DataFrame(test_pred_data, columns=['Actual Close', 'Predicted Close'])
-
-
-
 
 
 with tab3:
-    st.subheader("Prediction using LSTM (Long Short-Term Memory) model")
-    st.write("I have used an LSTM model to predict the stock closing prices which recursively uses closing price data of last 7 days to make predictions. The line plot below with the actual and predicted closing prices shows the accuracy of the model for now.")
-
-    line_fig = go.Figure()
-    line_fig.add_trace(go.Scatter(y=test_pred_data['Actual Close'], name='Actual Close',
-                                  mode='lines',
-                marker_color = 'indianred'))
-    line_fig.add_trace(go.Scatter(y=test_pred_data['Predicted Close'], name = 'Predicted Close',
-                                    mode='lines',
-                marker_color = 'lightseagreen'))
-   
-    st.plotly_chart(line_fig, use_container_width=True)
-
     st.subheader("Stock predictions using rolling average and SARIMA")
     roling_window = st.slider('Select the rolling average window', value=7, min_value=3, max_value=14)
     forecast_steps = st.slider('Select the number of days from Dec 4 2023 for which you want to make the predictions', value=1, min_value=1, max_value=14)
@@ -334,30 +244,32 @@ with tab3:
     data = stock_daily['Close']
     
     rolling_average = data.rolling(roling_window).mean()
+
     with col1:
         st.write('Rolling average')
         st.write(rolling_average)
+    
     rolling_average = rolling_average.dropna()
-
-
 
     if sarima_predict:
         # Fit SARIMA model on the rolling average
-        order = (1, 0, 1)  # Example order, you may need to choose based on model diagnostics
-        seasonal_order = (1, 1, 1, 12)  # Example seasonal order
+        order = (1, 0, 1)
+        seasonal_order = (1, 1, 1, 12)
         sarima_model = SARIMAX(rolling_average, order=order, seasonal_order=seasonal_order)
         sarima_fit = sarima_model.fit(disp=False)
 
         # Forecast future values
-    
         forecast = sarima_fit.get_forecast(steps=forecast_steps) 
-        forecast_index = pd.date_range(start=rolling_average.index[-1], periods=forecast_steps + 1, freq='B')[1:]  # Adjust frequency as needed
+        forecast_index = pd.date_range(start=rolling_average.index[-1], periods=forecast_steps + 1, freq='B')[1:]
         forecast_values = forecast.predicted_mean.values
-
         forecast_df = pd.DataFrame({'Date': forecast_index, 'Forecast': forecast_values})
+
         with col2:
             st.write("Forecast")
             st.write(forecast_df['Forecast'])
+
+        #forecast_fig = go.Figure()
+        #forecast_fig.add_trace(go.Line(x=))
 
 
     
