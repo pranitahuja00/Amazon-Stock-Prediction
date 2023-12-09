@@ -23,7 +23,7 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 
 st.title("Amazon Stock Analysis and Prediction")
 
-tab1, tab2, tab3, tab4 = st.tabs(['Stock Study and Analysis', 'Interactive Analysis', 'Future Predictions', 'Conclusion'])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(['Intro and Overview','Stock Study and Analysis', 'Interactive Analysis', 'Future Predictions', 'About Me'])
 
 stock_info = pd.read_csv('https://raw.githubusercontent.com/pranitahuja00/Amazon-Stock-Prediction/main/data/AMZN.csv')
 stock_daily = pd.read_csv("https://raw.githubusercontent.com/pranitahuja00/Amazon-Stock-Prediction/main/data/AMZN_daily.csv")
@@ -38,34 +38,9 @@ stock_weekly=stock_weekly.drop('Adj Close', axis=1)
 stock_monthly['Date']=pd.to_datetime(stock_monthly['Date'])
 stock_monthly=stock_monthly.drop('Adj Close', axis=1)
 
-# Engineering Stock Movement Feature
-previous_day_price = stock_daily["Close"].shift(+1)
-previous_day_price[0] = stock_daily["Close"][0]
-stock_daily['previous_day_price'] = previous_day_price
-stock_daily['Movement'] = 0
-stock_daily.loc[stock_daily['Close'] > stock_daily['previous_day_price'], 'Movement'] = 1
-stock_daily.loc[stock_daily['Close'] < stock_daily['previous_day_price'], 'Movement'] = -1
-stock_daily = stock_daily.drop('previous_day_price', axis=1)
-
-previous_day_price = stock_weekly["Close"].shift(+1)
-previous_day_price[0] = stock_weekly["Close"][0]
-stock_weekly['previous_day_price'] = previous_day_price
-stock_weekly['Movement'] = 0
-stock_weekly.loc[stock_weekly['Close'] > stock_weekly['previous_day_price'], 'Movement'] = 1
-stock_weekly.loc[stock_weekly['Close'] < stock_weekly['previous_day_price'], 'Movement'] = -1
-stock_weekly = stock_weekly.drop('previous_day_price', axis=1)
-
-previous_day_price = stock_monthly["Close"].shift(+1)
-previous_day_price[0] = stock_monthly["Close"][0]
-stock_monthly['previous_day_price'] = previous_day_price
-stock_monthly['Movement'] = 0
-stock_monthly.loc[stock_monthly['Close'] > stock_monthly['previous_day_price'], 'Movement'] = 1
-stock_monthly.loc[stock_monthly['Close'] < stock_monthly['previous_day_price'], 'Movement'] = -1
-stock_monthly = stock_monthly.drop('previous_day_price', axis=1)
-
 
 # TAB 1
-with tab1:
+with tab2:
     st.subheader("Stock Analysis")
 
     st.write("Monthly stock closing price over the years (Scale: Log):")
@@ -161,7 +136,7 @@ with tab1:
 
     st.write("The above charts represent the stock price trends from in the last two years. These plots indicate that Amazon stocks have went down significantly during the 2021 - 2022 year from around 178 USD to an annual low of 86.14 USD. The next year (2022 - 2023) witnessed a significant rising trend with some small variations in between. The stock price in the last year ranged from an all time low of 81.43 USD all the way to an all time high of 149.26 USD with median opening and closing prices of 123.01 USD and 121.166 USD and both their averages sitting at around 116.5 USD")
 
-with tab2:
+with tab3:
     st.subheader("Interactive Analysis")
     st.write("Stock Price and trade volume over custom time period:")
     st.write("Select a minimum time period of 2 years to view seasonality and quarterly averages as well")
@@ -235,7 +210,7 @@ with tab2:
 
 
 
-with tab3:
+with tab4:
     st.subheader("Stock predictions using rolling average and SARIMA")
     roling_window = st.slider('Select the rolling average window', value=7, min_value=3, max_value=14)
     forecast_steps = st.slider('Select the number of days from Dec 4 2023 for which you want to make the predictions', value=1, min_value=1, max_value=14)
@@ -270,9 +245,3 @@ with tab3:
 
         #forecast_fig = go.Figure()
         #forecast_fig.add_trace(go.Line(x=))
-
-
-    
-
-
-
