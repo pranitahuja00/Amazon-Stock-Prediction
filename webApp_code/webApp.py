@@ -5,18 +5,7 @@ import altair as alt
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import matplotlib.pyplot as plt
-import seaborn as sns
-from altair import datum
 from datetime import *
-import pickle
-import torch
-import torch.nn as nn
-from sklearn.preprocessing import MinMaxScaler
-from torch.utils.data import Dataset
-from copy import deepcopy as dc
-from statsmodels.tsa.holtwinters import SimpleExpSmoothing
-from sklearn.metrics import mean_squared_error
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.seasonal import seasonal_decompose
 
@@ -25,12 +14,9 @@ st.title("Amazon Stock Analysis and Prediction")
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(['Intro and Overview','Stock Study and Analysis', 'Interactive Analysis', 'Future Predictions', 'About Me'])
 
-stock_info = pd.read_csv('https://raw.githubusercontent.com/pranitahuja00/Amazon-Stock-Prediction/main/data/AMZN.csv')
 stock_daily = pd.read_csv("https://raw.githubusercontent.com/pranitahuja00/Amazon-Stock-Prediction/main/data/AMZN_daily.csv")
 stock_weekly = pd.read_csv("https://raw.githubusercontent.com/pranitahuja00/Amazon-Stock-Prediction/main/data/AMZN_weekly.csv")
 stock_monthly = pd.read_csv("https://raw.githubusercontent.com/pranitahuja00/Amazon-Stock-Prediction/main/data/AMZN_monthly.csv")
-stock_info['Date']=pd.to_datetime(stock_info['Date'])
-stock_info=stock_info.drop('Adj Close', axis=1)
 stock_daily['Date']=pd.to_datetime(stock_daily['Date'])
 stock_daily=stock_daily.drop('Adj Close', axis=1)
 stock_weekly['Date']=pd.to_datetime(stock_weekly['Date'])
