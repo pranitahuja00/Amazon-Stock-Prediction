@@ -247,12 +247,9 @@ with tab4:
 
 with tab5:
     st.subheader("The Developer")
-    col_bio, col_image = st.columns(2)
-    with col_bio:
-        st.write("Hello, my name is Pranit Ahuja and I am a first year Data Science graduate student at Michigan State University with a bachelor's degree in Computer Science and Engineering. I have about 12 months of industry experience working in the field of Software Engineering and currently I am working as a part-time Research Assistant at the Institute of Quantitative Health Science and Engineering.")
-        st.write("I developed this project because I wanted to explore time series data and how different time series forecasting methods work along with the various factors that come into play in the real world.")
-        st.subheader("More about me:")
-        st.link_button("LinkedIn", "https://www.linkedin.com/in/pranit-ahuja/")
-        st.link_button("GitHub", "https://github.com/pranitahuja00")
-    with col_image:
-        st.image("/images/bio", use_column_width=True)
+
+    st.write("Hello, my name is Pranit Ahuja and I am a first year Data Science graduate student at Michigan State University with a bachelor's degree in Computer Science and Engineering. I have about 12 months of industry experience working in the field of Software Engineering and currently I am working as a part-time Research Assistant at the Institute of Quantitative Health Science and Engineering.")
+    st.write("I developed this project because I wanted to explore time series data and how different time series forecasting methods work along with the various factors that come into play in the real world.")
+    st.subheader("More about me:")
+    st.link_button("LinkedIn", "https://www.linkedin.com/in/pranit-ahuja/")
+    st.link_button("GitHub", "https://github.com/pranitahuja00")
