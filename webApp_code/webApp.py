@@ -255,4 +255,4 @@ with tab5:
         st.link_button("LinkedIn", "https://www.linkedin.com/in/pranit-ahuja/")
         st.link_button("GitHub", "https://github.com/pranitahuja00")
     with col_image:
-        st.image("https://drive.google.com/file/d/1zeqjqrjhJVk5x3X3ofNikQgPuDGoZ3GW/view?usp=drivesdk", use_column_width=True)
+        st.image("/images/bio", use_column_width=True)
