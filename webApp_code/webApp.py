@@ -24,8 +24,21 @@ stock_weekly=stock_weekly.drop('Adj Close', axis=1)
 stock_monthly['Date']=pd.to_datetime(stock_monthly['Date'])
 stock_monthly=stock_monthly.drop('Adj Close', axis=1)
 
-
 # TAB 1
+with tab1:
+    st.subheader("Introduction")
+    st.write("Amazon.com, Inc., commonly known as Amazon, is a multinational technology and e-commerce company based in Seattle, Washington, USA. Founded by Jeff Bezos in 1994, Amazon started as an online bookstore but quickly expanded its product and service offerings to include a wide range of goods and services, including e-books, electronics, streaming services, cloud computing, and more.")
+    st.write("Amazon has been one of the largest and most valuable companies in the world, with a significant presence in various industries. Its stock, traded under the ticker symbol 'AMZN' on the NASDAQ stock exchange, has been known for its substantial growth over the years.")
+    st.write("This analysis dashboard is divided into three main parts: -")
+    st.markdown("- Stock study and Analysis: This part mainly studies and analyses the historical and recent performance of Amazon on the stock market")
+    st.markdown("- Interactive Analysis: This part allows the users to set custom date ranges and analyse the company's stock within that period of time")
+    st.markdown("- Future Predictions: This part allows users to select a rolling average and a time period for which they want to predict the stock prices")
+    st.subheader("About The Data")
+    st.write("The stock data was extracted from Yahoo Finance and starts from may 1997 which is when Amazon went public and entered the stock market.")
+    st.write("A preview of the dataset: -")
+    st.write(stock_daily.head(5))
+    st.write(stock_daily.tail(5))
+
 with tab2:
     st.subheader("Stock Analysis")
 
